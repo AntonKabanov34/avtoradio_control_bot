@@ -1,6 +1,6 @@
 # Folders Audio_file
-folder_a = '' # Откуда берем аудиофайлы
-folder_b = '' # Куда копируем аудиофайлы
+folder_a = '' # Folder where we get the files from
+folder_b = '' # Folder where we copy files
 
 # data_base
 db_name = 'users.db' #create db name
