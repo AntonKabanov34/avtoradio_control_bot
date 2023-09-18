@@ -1,13 +1,16 @@
 # Модули
 from config import folder_a, folder_b
 from users_rqests_map import mounth
+from config import db_name
 
 # Библиотеки
+import sqlite3
 from os import listdir, path
 from shutil import copytree
 from datetime import datetime
 from re import match
 import shutil
+import requests
 
 class Audio_file:
     def __init__(self, folder_a: str, folder_b: str):
@@ -130,7 +133,154 @@ class Audio_file:
         pass
 
 
+    def print_available_airs(self):
+        """Формирует для пользователя словарь с доступными записями эфира"""
+        pass
         
+
+class DataBase:
+    def __init__(self, db_name: str):
+        """Получает на вход только имя БД"""
+        self.db_name = db_name
+        pass
+
+    def create_db_users(self):
+        """Создает БД при старте"""
+        
+        # Создаем таблицу bot_users
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS bot_users (
+                        id INTEGER PRIMARY KEY,
+                        chat_id INTEGER,
+                        first_name TEXT,
+                        username TEXT,
+                        user_status INTEGER,
+                        news_subscribe INTEGER,
+                        last_uid_news INTEGER
+                    )
+                ''')
+
+            print(f'База данных {self.db_name} инициализирована.')
+        except sqlite3.Error as e:
+            print(f'База данных не найдена или произошла ошибка: {e}')
+
+        # Создаем таблицу user_count
+        try:
+            with sqlite3.connect(db_name) as conn:
+                cursor = conn.cursor()
+
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS user_counts (
+                        id INTEGER PRIMARY KEY,
+                        user_count INTEGER
+                    )
+                ''')
+                # Если таблица только что создана, добавляем начальное значение
+                cursor.execute('INSERT OR IGNORE INTO user_counts (id, user_count) VALUES (?, ?)', (1, 0))
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных: {e}")
+
+        # Создаем таблицу new_bot_users
+        try:
+            with sqlite3.connect(db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS new_bot_users (
+                        id INTEGER PRIMARY KEY,
+                        chat_id INTEGER,
+                        first_name TEXT,
+                        username TEXT,
+                        user_status INTEGER,
+                        news_subscribe INTEGER,
+                        last_uid_news INTEGER
+                    )
+                ''')
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных: {e}")
+
+    def examination_count_user(self)->bool:
+        """Проверяет на 0 кол-во prymary_key в таблице bot_users"""
+        with sqlite3.connect(db_name) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_count FROM user_counts WHERE id = 1')
+            result = cursor.fetchone()
+            if 0 in result:
+                return True
+            else:
+                return False
+        pass
+    
+    def add_data(self, table_name, chat_id, first_name, username, user_status, news_subscribe, last_uid_news):
+        """Транзакция для добавления данных пользователя и изменение счетчика"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                query = f'INSERT INTO {table_name} (chat_id, first_name, username, user_status, news_subscribe, last_uid_news) VALUES (?, ?, ?, ?, ?, ?)'
+                data = (chat_id, first_name, username, user_status, news_subscribe, last_uid_news)
+
+                cursor.execute(query, data)
+                cursor.execute('UPDATE user_counts SET user_count = user_count + 1 WHERE id = 1')
+                conn.commit()
+                print(f'Данные {chat_id} успешно добавлены')
+
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе add_data: {e}")
+    
+    def loging_users(self, chat_id) -> bool:
+        """Проверяет наличие пользователя в таблице bot_users"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT id FROM bot_users WHERE chat_id = ? LIMIT 1', (chat_id,))
+                user_id = cursor.fetchone()
+                if user_id is not None:
+                    return True
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе loging_users: {e}")
+
+        return False
+
+
+        
+    
+
+
+
+
+class Valute:
+    def __init__(self):
+        pass
+
+    def pars_valute(self):
+        # URL API Центрального банка России для получения курса валют
+        url = "https://www.cbr-xml-daily.ru/daily_json.js"
+
+        try:
+            response = requests.get(url)
+            data = response.json()
+            
+            # Печатаем информацию о валютах
+            for currency_code, currency_info in data['Valute'].items():
+                print(f"Код валюты: {currency_code}")
+                print(f"Название: {currency_info['Name']}")
+                print(f"Курс к рублю: {currency_info['Value']} рублей")
+                print(f"Номинал: {currency_info['Nominal']}")
+                print("------------")
+
+        except requests.exceptions.RequestException as e:
+            print(f"Ошибка при запросе к API: {e}")
+        except ValueError as e:
+            print(f"Ошибка при обработке JSON-данных: {e}")
+
+
+
+
+
+
+
 
         
 
@@ -138,11 +288,21 @@ class Audio_file:
 
 
 audio = Audio_file(folder_a, folder_b)
+valute = Valute()
+db = DataBase(db_name)
 
-audio.print_available_dates(audio.available_dates(folder_b))
+#audio.print_available_dates(audio.available_dates(folder_b))
 #audio.copy_file(folder_a, folder_b) #Сценарий автообновления папки бота
 #audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
+#db.create_db_users() # Сценарий создания таблицы пользователей
+print(db.examination_count_user())
+print(db.loging_users('166476724'))
 
+
+#valute.pars_valute()
+
+"""cursor.execute('SELECT id FROM avtoradio_bot_users WHERE id=? AND user_status=1', (user_id,))
+return bool(cursor.fetchall())"""
         
         
 
