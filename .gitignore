@@ -1,3 +1,4 @@
 /avtoradio_bot_venv/
 /__pycache__/
 config.py
+users.db
