@@ -243,6 +243,25 @@ class DataBase:
 
         return False
 
+    def admin_users(self, table, chat_id, status) -> bool:
+        """Проверка статуса: Админ"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT id FROM {table} WHERE chat_id = ? AND user_status = ? LIMIT 1', (chat_id, status))
+                user_id = cursor.fetchone()
+
+                if user_id is not None:
+                    return True
+
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе admin_users: {e}")
+
+        return False
+
+    #Получить ид всех пользователей со статусом 1(название таблицы, название столбца, статус который ищем)
+    # Изменить поле (название таблицы, название столбца, значение столбца)
+    # Получить 
 
         
     
@@ -295,8 +314,7 @@ db = DataBase(db_name)
 #audio.copy_file(folder_a, folder_b) #Сценарий автообновления папки бота
 #audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
 #db.create_db_users() # Сценарий создания таблицы пользователей
-print(db.examination_count_user())
-print(db.loging_users('166476724'))
+print(db.admin_users('bot_users', '166476724', 1))
 
 
 #valute.pars_valute()
