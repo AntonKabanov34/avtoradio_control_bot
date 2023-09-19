@@ -13,7 +13,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from config import TOKEN
 from clases import db
 from texts import welcome, users, no_users, on_air, web_site, valute, admin, \
-list_users,list_new_users, what_action
+list_users,list_new_users, what_action, choise_user
 
 API_TOKEN = TOKEN  
 
@@ -22,6 +22,7 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
+
 
 # Main Keyboard Button
 def main_keyboard_button() -> ReplyKeyboardMarkup:
@@ -46,6 +47,17 @@ def admin_main_inline_keyboard() -> InlineKeyboardButton:
     keyboard.add(list_users_button, new_users_button)
 
     return keyboard 
+
+def users_inline_list(input_chat_id, table:str) -> InlineKeyboardButton:
+    """Выводит список пользователей"""
+    users = db.users_list(table)
+    buttons = [InlineKeyboardButton(first_name, callback_data=str(chat_id))
+           for first_name, chat_id in users.items() if chat_id != input_chat_id]
+    
+    back_button = InlineKeyboardButton("<- Назад", callback_data="back_main_admin")
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(*buttons, back_button)
+    return markup
 
 # Обработчик команд
 @dp.message_handler(commands=['start'])
@@ -117,16 +129,36 @@ async def handle_text_message(message: types.Message):
         print('Что-то произошло в блоке message_handler, обработчике текстовых команд')
         pass
 
-
-
-        
-
-
-
-
-
-
-
+# Обработчик колбеков
+@dp.callback_query_handler(lambda callback_query: True)
+async def main_callback(query: types.CallbackQuery):
+    
+    # Показывает список пользователей
+    if query.data == 'list_users':
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=choise_user,
+            reply_markup=users_inline_list(query.message.chat.id, 'bot_users'))
+        pass
+    
+    # Показывает список новых пользователей 
+    elif query.data == 'new_users':
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=choise_user,
+            reply_markup=users_inline_list(query.message.chat.id, 'new_bot_users'))
+        pass
+    
+    #Инлайн - возвращает в меню админа
+    elif query.data == 'back_main_admin':
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=what_action,
+            reply_markup=admin_main_inline_keyboard())
+        pass
 
 
 
