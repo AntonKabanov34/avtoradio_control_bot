@@ -259,6 +259,21 @@ class DataBase:
 
         return False
 
+    def users_list(self, table:str) -> dict:
+        """Возвращает словарь ключ: first_name, значение: chat_id"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT first_name, chat_id FROM {table}')
+                user_data = cursor.fetchall()
+                user_dict = {first_name: chat_id for first_name, chat_id in user_data}
+                print(user_dict)
+                return user_dict
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе users_list: {e}")
+            return {}
+
+
     #Получить ид всех пользователей со статусом 1(название таблицы, название столбца, статус который ищем)
     # Изменить поле (название таблицы, название столбца, значение столбца)
     # Получить 
@@ -314,7 +329,7 @@ db = DataBase(db_name)
 #audio.copy_file(folder_a, folder_b) #Сценарий автообновления папки бота
 #audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
 #db.create_db_users() # Сценарий создания таблицы пользователей
-print(db.admin_users('bot_users', '166476724', 1))
+print(db.users_list('bot_users'))
 
 
 #valute.pars_valute()
