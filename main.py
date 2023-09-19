@@ -1,3 +1,4 @@
+# Библиотеки
 import logging
 import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
@@ -6,6 +7,7 @@ from aiogram.types import ParseMode
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
 
+# Модули
 from config import TOKEN
 from clases import db
 from texts import welcome, users, no_users, on_air, web_site, valute, admin
@@ -31,6 +33,7 @@ def main_keyboard_button() -> ReplyKeyboardMarkup:
     markup.add(button_admin)
     return markup
 
+#Inline Button
 
 # Обработчик команд
 @dp.message_handler(commands=['start'])
@@ -90,9 +93,12 @@ async def handle_text_message(message: types.Message):
     
     # Обработчик команды "Администратор"
     elif message.text == admin:
-        # Проверка на админа
-        await bot.send_message(message.chat.id, 'Вы запросили доступ к меню администратора')
-        pass
+        if db.admin_users('bot_users', message.chat.id, 1):
+            await bot.send_message(message.chat.id, 'Вы запросили доступ к меню администратора')
+            pass
+        else:
+            await bot.send_message(message.chat.id, no_users)
+            pass
 
     # На случай если что-то сломается
     else:
