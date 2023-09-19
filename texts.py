@@ -13,8 +13,9 @@ receipt = 'Спасибо администратор рассмотрит ваш
 yes_receipt = 'Ваша заявка принята. Нажмите /start и получите весь доступ к функционалу.'
 
 # Admin aplication
-list_users = 'Список Юзеров'
+list_users = 'Список юзеров'
 list_new_users = 'Список заявок'
+choise_user = 'Выберете пользователя:'
 yes_new_users = 'Принять'
 no_new_users = 'Отклонить'
 
