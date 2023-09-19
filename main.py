@@ -4,13 +4,16 @@ import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 
 # Модули
 from config import TOKEN
 from clases import db
-from texts import welcome, users, no_users, on_air, web_site, valute, admin
+from texts import welcome, users, no_users, on_air, web_site, valute, admin, \
+list_users,list_new_users, what_action
 
 API_TOKEN = TOKEN  
 
@@ -33,7 +36,16 @@ def main_keyboard_button() -> ReplyKeyboardMarkup:
     markup.add(button_admin)
     return markup
 
-#Inline Button
+#InlineButton Admin Menu
+def admin_main_inline_keyboard() -> InlineKeyboardButton:
+    """Кнопки базового меню админа"""
+    list_users_button = InlineKeyboardButton(list_users, callback_data = 'list_users')
+    new_users_button = InlineKeyboardButton(list_new_users, callback_data = 'new_users')
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(list_users_button, new_users_button)
+
+    return keyboard 
 
 # Обработчик команд
 @dp.message_handler(commands=['start'])
@@ -94,7 +106,7 @@ async def handle_text_message(message: types.Message):
     # Обработчик команды "Администратор"
     elif message.text == admin:
         if db.admin_users('bot_users', message.chat.id, 1):
-            await bot.send_message(message.chat.id, 'Вы запросили доступ к меню администратора')
+            await bot.send_message(message.chat.id, what_action, reply_markup=admin_main_inline_keyboard())
             pass
         else:
             await bot.send_message(message.chat.id, no_users)
