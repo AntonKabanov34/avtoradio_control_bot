@@ -272,6 +272,40 @@ class DataBase:
         except sqlite3.Error as e:
             print(f"Ошибка при работе с базой данных в методе users_list: {e}")
             return {}
+        
+    def user_chat_id(self, table: str) -> list:
+        """Получает список chat_id пользователей"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT chat_id FROM {table};')
+                chat_ids = [str(row[0]) for row in cursor.fetchall()]
+                return chat_ids
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе user_chat_id: {e}")
+            return []
+        
+    def print_info_user(self, table:str, chat_id:str) -> str:
+        """Возвращает информацию о пользователе"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT * FROM {table} WHERE chat_id = ?', (chat_id,))
+                user_data = cursor.fetchone()
+
+                if user_data:
+                    user_info = f'Это пользователь с именем {user_data[2]} и ником @{user_data[3]}.'
+                    user_info += f'Является {"Юзером" if user_data[4] == 0 else "Суперюзером" }.'
+                    user_info += f'{"Не подписан" if user_data[5] == 0 else "Подписан" } на новости.'
+                    user_info += 'Сделать....'
+                    return user_info
+                else:
+                    return "Пользователь не найден в базе данных."
+
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе print_info_user: {e}")
+            return "Произошла ошибка при работе с базой данных."
+    
 
 
     #Получить ид всех пользователей со статусом 1(название таблицы, название столбца, статус который ищем)
@@ -330,6 +364,7 @@ db = DataBase(db_name)
 #audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
 #db.create_db_users() # Сценарий создания таблицы пользователей
 print(db.users_list('bot_users'))
+print(db.user_chat_id('bot_users'))
 
 
 #valute.pars_valute()
