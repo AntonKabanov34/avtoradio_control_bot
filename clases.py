@@ -292,25 +292,109 @@ class DataBase:
                 cursor = conn.cursor()
                 cursor.execute(f'SELECT * FROM {table} WHERE chat_id = ?', (chat_id,))
                 user_data = cursor.fetchone()
-
-                if user_data:
-                    user_info = f'Это пользователь с именем {user_data[2]} и ником @{user_data[3]}.'
-                    user_info += f'Является {"Юзером" if user_data[4] == 0 else "Суперюзером" }.'
-                    user_info += f'{"Не подписан" if user_data[5] == 0 else "Подписан" } на новости.'
-                    user_info += 'Сделать....'
-                    return user_info
+                if table == 'bot_users':
+                    if user_data:
+                        user_info = f'Это пользователь с именем {user_data[2]} и ником @{user_data[3]}.\n'
+                        user_info += f'Является {"Юзером" if user_data[4] == 0 else "Суперюзером" }.\n'
+                        user_info += f'{"Не подписан" if user_data[5] == 0 else "Подписан" } на новости.'
+                        user_info += 'Сделать....'
+                        return user_info
+                    else:
+                        return "Пользователь не найден в базе данных."
+                elif table == 'new_bot_users':
+                    if user_data:
+                        user_info = f'Это пользователь с именем {user_data[2]} и ником @{user_data[3]}. \nРазрешить доступ к функционалу?'
+                        return user_info
+                    pass
                 else:
-                    return "Пользователь не найден в базе данных."
+                    print ('В методе print_info_user в ветке выбора таблиц произошла ошибка')
 
         except sqlite3.Error as e:
             print(f"Ошибка при работе с базой данных в методе print_info_user: {e}")
             return "Произошла ошибка при работе с базой данных."
     
+    def change_db(self, table:str, chat_id:str, column:str, data) -> bool:
+        """Обновляет данные в указанной таблице и колонке для определенного чата."""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                query = f'UPDATE {table} SET {column} = ? WHERE chat_id = ?'
+                cursor.execute(query, (data, chat_id))
+                conn.commit()
+                return True
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе change_db: {e}")
+            return False
+        pass
+
+    def dellete_users(self, table:str, chat_id:str) -> bool:
+        """Удаляет данные пользователя в таблице по chat_id, меняет счетчик"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'DELETE FROM {table} WHERE chat_id = ?', (chat_id,))
+                if table == 'bot_users':
+                    cursor.execute('UPDATE user_counts SET user_count = user_count - 1 WHERE id = 1')
+                    conn.commit()
+                    return True
+                else:
+                    conn.commit()
+                    return True
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе delete_user: {e}")
+            return False
+        pass
+
+    def postpone_users(self, table_a:str, table_b:str, chat_id:str) -> bool:
+        """Переносить данные пользователя из таблицы new_bot_users в таблицу bot_users"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT chat_id, first_name, username, user_status, news_subscribe, last_uid_news FROM {table_a} WHERE chat_id = ?', (chat_id,))
+                user_data = cursor.fetchone()
+                if user_data:
+                    self.add_data(table_b, *user_data)
+                    cursor.execute(f'DELETE FROM {table_a} WHERE chat_id = ?', (chat_id,))
+                    conn.commit()
+                    return True
+                else:
+                    return False
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе postpone_user: {e}")
+            return False
+
+    def change_users(self, table:str, chat_id:str, comand:str) -> str:
+        """Обращается к БД, обращется к таблице, находит пользователя по id менет данные в столбце или удяляет запись"""
+        check = 'Изменения внесены!'
+        no_check = 'Изменения не внесены, обратитесь к администратору!'
+
+        # Делает пользователя обычным пользователем
+        if comand =='do_user':
+            req = self.change_db(table, chat_id, 'user_status', 0)
+            return check if req == True else no_check
+ 
+        #Делает пользователя админом
+        elif comand =='new_admin':
+            req = self.change_db(table, chat_id, 'user_status', 1)
+            return check if req == True else no_check
+        
+        # Удаляет пользователя из БД
+        elif comand == 'dellete_user':
+            req = self.dellete_users(table, chat_id)
+            return check if req == True else no_check
+
+        # Переносит пользователя из new_bot_users в bot_users
+        elif comand == 'yes_new_users':
+            req = self.postpone_users(table, 'bot_users', chat_id)
+            return check if req == True else no_check
+        
+        # На случай если что-то сломается
+        else:
+            return 'Произошла ошибка, обратитесь к администратору.'
+            print('В методе change_users произошла ошибка')
+        pass
 
 
-    #Получить ид всех пользователей со статусом 1(название таблицы, название столбца, статус который ищем)
-    # Изменить поле (название таблицы, название столбца, значение столбца)
-    # Получить 
 
         
     
