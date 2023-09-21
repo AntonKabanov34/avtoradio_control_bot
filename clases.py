@@ -102,41 +102,24 @@ class Audio_file:
             
             folder_list.pop(0)
 
-    def file_in_folder(self, folder_path, folder:str) -> list:
-        """Принимает имя каталога и имя папки, возвращает список файлов в папке"""
-        folder_path = f'{folder_path}/{folder}'
-        file_names = [file_name for file_name in listdir(folder_path) if path.isfile(path.join(folder_path, file_name))]   
-        return file_names
+    def print_dates(self, folder:str) -> dict:
+        """Отправляет словарь с доступными датами в конечной папке бота"""
+        pattern_folder_name = r'^\d{4}-\d{2}-\d{2}$'
 
-    def available_dates(self, folder: str) -> list:
-        """Формирует список доступных дат архива"""
-        folders_default = listdir(folder)
-        folders =[]
-        for folder in folders_default:
-            if folder != '.DS_Store':
-                folders.append(folder)
+        dates = listdir(folder)
+        dates.sort()
+        out_dict = {}
+        for i in dates:
+            # переписать с использованием объектов datetime
+            if match(pattern_folder_name, i):
+                out_dict[f'{i[8:]} {mounth[i[5:7]]}'] = i
             else:
                 pass
-        return folders
-        pass
-    
-    def print_available_dates(self, folder: list) -> dict:
-        """Формирует для пользователя список доступных дат"""
-        # {'15 Февраля': 2022-02-15}
-        date_dict = {}
-        for date_obj in folder:
-            date = datetime.strptime(date_obj, "%Y-%m-%d")
-            month_number = date.month
-            add_key = f'{date.day} {mounth[month_number]}'
-            date_dict[add_key] = date_obj
-        return date_dict
-        pass
+        return out_dict
+ 
+ # Метод принимает на вход имя папки, и ответ пользователя, обращается к папке котоурю выбрал пользователь возвращает словарь
 
 
-    def print_available_airs(self):
-        """Формирует для пользователя словарь с доступными записями эфира"""
-        pass
-        
 
 class DataBase:
     def __init__(self, db_name: str):
@@ -397,7 +380,6 @@ class DataBase:
             print('В методе change_users произошла ошибка')
         pass
 
-    #Списки чат-айди для управления рассылками
     def chat_id_list(self, table:str, column:str, value:int) -> list:
         """Собирает список chat_id по данным столбца"""
         try:
@@ -410,14 +392,6 @@ class DataBase:
             print(f"Ошибка при работе с базой данных в методе chat_id_list: {e}")
             return []
         pass
-
-    #
-
-        
-    
-
-
-
 
 class Valute:
     def __init__(self):
@@ -464,9 +438,11 @@ db = DataBase(db_name)
 #audio.copy_file(folder_a, folder_b) #Сценарий автообновления папки бота
 #audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
 #db.create_db_users() # Сценарий создания таблицы пользователей
-print(db.users_list('bot_users'))
-print(db.user_chat_id('bot_users'))
-print(db.chat_id_list('bot_users', 'user_status', 1))
+#print(db.users_list('bot_users'))
+#print(db.user_chat_id('bot_users'))
+#print(db.chat_id_list('bot_users', 'user_status', 1))
+
+audio.print_dates(folder_b)
 
 
 #valute.pars_valute()
