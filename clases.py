@@ -222,8 +222,11 @@ class DataBase:
                 data = (chat_id, first_name, username, user_status, news_subscribe, last_uid_news)
 
                 cursor.execute(query, data)
-                cursor.execute('UPDATE user_counts SET user_count = user_count + 1 WHERE id = 1')
-                conn.commit()
+                if table_name == 'bot_users':
+                    cursor.execute('UPDATE user_counts SET user_count = user_count + 1 WHERE id = 1')
+                    conn.commit()
+                else:
+                    conn.commit()
                 print(f'Данные {chat_id} успешно добавлены')
 
         except sqlite3.Error as e:
@@ -394,7 +397,21 @@ class DataBase:
             print('В методе change_users произошла ошибка')
         pass
 
+    #Списки чат-айди для управления рассылками
+    def chat_id_list(self, table:str, column:str, value:int) -> list:
+        """Собирает список chat_id по данным столбца"""
+        try:
+            with sqlite3.connect(self.db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT chat_id FROM {table} WHERE {column} = ?', (value,))
+                chat_ids = [row[0] for row in cursor.fetchall()]
+                return chat_ids
+        except sqlite3.Error as e:
+            print(f"Ошибка при работе с базой данных в методе chat_id_list: {e}")
+            return []
+        pass
 
+    #
 
         
     
@@ -449,6 +466,7 @@ db = DataBase(db_name)
 #db.create_db_users() # Сценарий создания таблицы пользователей
 print(db.users_list('bot_users'))
 print(db.user_chat_id('bot_users'))
+print(db.chat_id_list('bot_users', 'user_status', 1))
 
 
 #valute.pars_valute()
