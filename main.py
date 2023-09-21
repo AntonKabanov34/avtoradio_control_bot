@@ -14,7 +14,7 @@ from config import TOKEN
 from clases import db
 from texts import welcome, users, no_users, on_air, web_site, valute, admin, \
 list_users,list_new_users, what_action, choise_user, new_admin, low_users, del_users, \
-yes_new_users, no_new_users
+yes_new_users, no_new_users, admin_aplikation, yes_aplication, no_aplication, receipt, yes_receipt, goodbay
 
 
 API_TOKEN = TOKEN  
@@ -26,6 +26,7 @@ dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 
 admin_responses = [] # Хранит ответы админа
+new_users_data = []
 user_responses_audio = [] # Хранит запросы пользователя
 
 
@@ -91,7 +92,16 @@ def add_new_users_inline() -> InlineKeyboardButton:
 
     return keyboard
 
+def new_users_inline() -> InlineKeyboardButton:
+    """Отправляет пользователю кнопку заявки"""
+    aplication_yes = InlineKeyboardButton(yes_aplication, callback_data = 'aplication_yes')
+    aplication_no = InlineKeyboardButton(no_aplication, callback_data = 'aplication_no')   
     
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(aplication_yes, aplication_no)
+
+    return keyboard 
+
 
 
 
@@ -112,7 +122,10 @@ async def send_welcome(message: types.Message):
             await bot.send_message(message.chat.id, users, reply_markup=main_keyboard_button())
             pass  
         else:
-            await bot.send_message(message.chat.id, no_users)
+            db.add_data('new_bot_users', message.from_user.id, message.from_user.first_name, 
+                    message.from_user.username, 0, 0, None)
+            new_users_data.append(message.from_user.id)
+            await bot.send_message(message.chat.id, no_users, reply_markup=new_users_inline())
             pass
     
     # На случай если сломается
@@ -195,7 +208,7 @@ async def main_callback(query: types.CallbackQuery):
         pass
 
     # Выводит данные о пользователях    
-    elif query.data in db.user_chat_id(admin_responses[0]):
+    elif len(admin_responses) > 0 and query.data in db.user_chat_id(admin_responses[0]):
         admin_responses.append(query.data)
         # Принтуем данные пользователя (мтод в ДБ который принимает таблицу и чат ID)
         await bot.edit_message_text(
@@ -238,6 +251,7 @@ async def main_callback(query: types.CallbackQuery):
             chat_id=query.message.chat.id,
             message_id=query.message.message_id,
             text= db.change_users(admin_responses[0], admin_responses[1], query.data))
+        await bot.send_message(admin_responses[1], yes_receipt)
         admin_responses.clear()
         pass
 
@@ -258,8 +272,31 @@ async def main_callback(query: types.CallbackQuery):
             text=what_action,
             reply_markup=admin_main_inline_keyboard())
         pass
+
+    # Отправляет заявку пользователя на доступ к функционалу
+    elif query.data == 'aplication_yes':
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=receipt)
+        admin = db.chat_id_list('bot_users', 'user_status',1)
+        new_users_data.clear()
+        for a in admin:
+            await bot.send_message(a, admin_aplikation)
+        pass
+
+    # Отправляет пользователю заглушку
+    elif query.data == 'aplication_no':
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=goodbay)
+        db.dellete_users('new_bot_users', new_users_data[0])
+        new_users_data.clear()
+        pass
     
     else:
+        print('Что-то проищошло при обработке callback')
         pass
 
 
