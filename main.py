@@ -10,11 +10,12 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 # Модули
-from config import TOKEN
-from clases import db
+from config import TOKEN, folder_b
+from clases import db, audio
 from texts import welcome, users, no_users, on_air, web_site, valute, admin, \
 list_users,list_new_users, what_action, choise_user, new_admin, low_users, del_users, \
-yes_new_users, no_new_users, admin_aplikation, yes_aplication, no_aplication, receipt, yes_receipt, goodbay
+yes_new_users, no_new_users, admin_aplikation, yes_aplication, no_aplication, receipt, yes_receipt, goodbay,\
+date_folder, time_file
 
 
 API_TOKEN = TOKEN  
@@ -103,6 +104,29 @@ def new_users_inline() -> InlineKeyboardButton:
     return keyboard 
 
 
+#Inline Audio Menu
+def main_date_audio_inline() -> InlineKeyboardButton:
+    """Выводитменю со списокм доступных дат аудио"""
+    # получаем словарь
+    req = audio.print_dates(folder_b)
+    buttons = [InlineKeyboardButton(folder, callback_data=str(req[folder]))
+           for folder in req]
+    #back_button = InlineKeyboardButton("<- Назад", callback_data="back_main_admin")
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(*buttons)
+    return markup
+
+def time_menu_audio_inline() -> InlineKeyboardButton:
+    """Выводит список доступных временных слотов"""
+    req = audio.print_time_slots(folder_b, user_responses_audio[0])
+
+    buttons = [InlineKeyboardButton(time, callback_data=str(req[time]))
+           for time in req]
+    back_button = InlineKeyboardButton("<- Назад", callback_data = 'audio_date_menu')
+    markup = InlineKeyboardMarkup(row_width=4)
+    markup.add(*buttons)
+    markup.add(back_button)
+    return markup
 
 
 # Обработчик команд
@@ -140,7 +164,7 @@ async def handle_text_message(message: types.Message):
     # Обработчик команды "Эфир"
     if message.text == on_air:
         if db.loging_users(message.from_user.id):
-            await bot.send_message(message.chat.id, 'Вы запросили доступ к эфиру')
+            await bot.send_message(message.chat.id, date_folder, reply_markup = main_date_audio_inline())
             pass
         else:
             await bot.send_message(message.chat.id, no_users)
@@ -295,6 +319,46 @@ async def main_callback(query: types.CallbackQuery):
         new_users_data.clear()
         pass
     
+    # Обработчик запроса даты эфира
+    elif query.data in audio.date_list(folder_b):
+        """Обрабатывает колбек с кнопуи выбора даты"""
+        user_responses_audio.clear()
+        user_responses_audio.append(query.data)
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=time_file,
+            reply_markup=time_menu_audio_inline())
+        pass
+
+    # Обработчик запроса файла эфира
+    elif query.data in audio.file_list(folder_b, user_responses_audio[0]):
+        user_responses_audio.append(query.data)
+        
+        date_dict = audio.reverse_dict(audio.print_dates(folder_b))
+        tm_slots = audio.reverse_dict(audio.print_time_slots(folder_b, user_responses_audio[0]))
+        mess = f'Дата: {date_dict[user_responses_audio[0]]}. Время: {tm_slots[user_responses_audio[1]]}'
+        
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=mess)
+        file = open(f'{folder_b}/{user_responses_audio[0]}/{user_responses_audio[1]}', 'rb')
+        await bot.send_audio(query.message.chat.id, file )
+        file.close
+        user_responses_audio.clear()
+        pass
+
+    #Возвращает пользователя к выбору даты    
+    elif query.data == 'audio_date_menu':
+        user_responses_audio.clear()
+        await bot.edit_message_text(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id,
+            text=date_folder,
+            reply_markup=main_date_audio_inline())
+        pass
+
     else:
         print('Что-то проищошло при обработке callback')
         pass
