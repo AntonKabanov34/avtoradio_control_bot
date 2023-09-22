@@ -2,6 +2,7 @@
 Bot controlling the work of the department
 
 preparation for launch v.1.01:
+
 1.Open config.py:
   -add bot token
   -add folder_b (//folder_bot) #in future versions the program will mirror a network folder in automatic mode; 
