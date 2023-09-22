@@ -1,8 +1,6 @@
 # Библиотеки
-import asyncio
+import subprocess
 import logging
-import schedule
-import time
 import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
@@ -19,7 +17,7 @@ from texts import welcome, users, no_users, on_air, web_site, valute, admin, \
 list_users,list_new_users, what_action, choise_user, new_admin, low_users, del_users, \
 yes_new_users, no_new_users, admin_aplikation, yes_aplication, no_aplication, receipt, yes_receipt, goodbay,\
 date_folder, time_file
-from scenarios import main_work
+from scenarios import schedule_auto_update
 
 
 API_TOKEN = TOKEN  
@@ -369,16 +367,8 @@ async def main_callback(query: types.CallbackQuery):
 
 
 
-
-
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main_work())
-
     from aiogram import executor
     executor.start_polling(dp, skip_updates=True)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(60)   
 
