@@ -1,6 +1,6 @@
 # Модули
 from config import folder_a, folder_b
-from users_rqests_map import mounth
+from users_rqests_map import mounth, audio_content
 from config import db_name
 
 # Библиотеки
@@ -102,6 +102,15 @@ class Audio_file:
             
             folder_list.pop(0)
 
+    def reverse_dict(self, obj:dict) -> dict:
+        """Переворачивает словари"""
+        normal_dict = obj
+        reverse_dict = {}
+
+        for i in normal_dict:
+            reverse_dict[normal_dict[i]] = i
+        return reverse_dict
+
     def print_dates(self, folder:str) -> dict:
         """Отправляет словарь с доступными датами в конечной папке бота"""
         pattern_folder_name = r'^\d{4}-\d{2}-\d{2}$'
@@ -115,7 +124,64 @@ class Audio_file:
                 out_dict[f'{i[8:]} {mounth[i[5:7]]}'] = i
             else:
                 pass
+        
         return out_dict
+        
+    def date_list(self, folder:str) -> list:
+        """Принимает имя папки возвращет список папок в директории"""
+        pattern_folder_name = r'^\d{4}-\d{2}-\d{2}$'
+        dates = listdir(folder)
+        dates.sort()
+
+        out=[]
+        for i in dates:
+            if match(pattern_folder_name, i):
+                out.append(i)
+            else:
+                pass
+
+        return out
+
+    def print_time_slots(self, folder:str, date:str) -> dict:
+        """Принимает на вход конечную папку и директорию которую выбрал пользователь, возвращает словарь 0 - для принтовки пользователю, 1 - для конечного сообщения"""
+        pattern_file_name = r'^\d{2}-\d{2}-\d{2}\.mp3$'
+
+        folder = f'{folder}/{date}'
+        files = listdir(folder)
+        files.sort()
+
+        origin = audio_content
+        work = {value: key for key, value in origin.items()}
+
+        out_dict = {}
+
+        for i in files:
+            if match(pattern_file_name, i):
+                out_dict[work[i]] = i
+                pass
+            else:
+                pass
+        return out_dict
+                
+    def file_list(self, folder_bot:str, folder_user) ->list:
+        """Принимает папку с датой от пользователя, возвращает лист с именами всех файлов в """
+        pattern_file_name = r'^\d{2}-\d{2}-\d{2}\.mp3$'
+
+        folder = f'{folder_bot}/{folder_user}'
+        files = listdir(folder)
+        files.sort()
+
+        out = []
+        for i in files:
+            if match(pattern_file_name, i):
+                out.append(i)
+            else:
+                pass
+        
+        return out
+
+
+
  
  # Метод принимает на вход имя папки, и ответ пользователя, обращается к папке котоурю выбрал пользователь возвращает словарь
 
@@ -442,7 +508,9 @@ db = DataBase(db_name)
 #print(db.user_chat_id('bot_users'))
 #print(db.chat_id_list('bot_users', 'user_status', 1))
 
-audio.print_dates(folder_b)
+print(audio.print_dates(folder_b))
+#print(audio.print_time_slots(folder_b, '2023-02-16', 1))
+
 
 
 #valute.pars_valute()
