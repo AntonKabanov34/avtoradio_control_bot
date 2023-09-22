@@ -86,9 +86,7 @@ class Audio_file:
             else:
                 pass
         sorted(folder_list)
-        print(folder_list)
 
-        
         while len(folder_list) > len_folders:
             folder_path = f'{folder_b}/{folder_list[0]}'
             if path.exists(folder_path):  # Проверяем существование папки
@@ -102,6 +100,12 @@ class Audio_file:
             
             folder_list.pop(0)
 
+    def file_in_folder(self, folder_path, folder:str) -> list:
+        """Принимает имя каталога и имя папки, возвращает список файлов в папке"""
+        folder_path = f'{folder_path}/{folder}'
+        file_names = [file_name for file_name in listdir(folder_path) if path.isfile(path.join(folder_path, file_name))]   
+        return file_names
+    
     def reverse_dict(self, obj:dict) -> dict:
         """Переворачивает словари"""
         normal_dict = obj
@@ -179,13 +183,6 @@ class Audio_file:
                 pass
         
         return out
-
-
-
- 
- # Метод принимает на вход имя папки, и ответ пользователя, обращается к папке котоурю выбрал пользователь возвращает словарь
-
-
 
 class DataBase:
     def __init__(self, db_name: str):
@@ -319,7 +316,6 @@ class DataBase:
                 cursor.execute(f'SELECT first_name, chat_id FROM {table}')
                 user_data = cursor.fetchall()
                 user_dict = {first_name: chat_id for first_name, chat_id in user_data}
-                print(user_dict)
                 return user_dict
         except sqlite3.Error as e:
             print(f"Ошибка при работе с базой данных в методе users_list: {e}")
@@ -459,65 +455,8 @@ class DataBase:
             return []
         pass
 
-class Valute:
-    def __init__(self):
-        pass
 
-    def pars_valute(self):
-        # URL API Центрального банка России для получения курса валют
-        url = "https://www.cbr-xml-daily.ru/daily_json.js"
-
-        try:
-            response = requests.get(url)
-            data = response.json()
-            
-            # Печатаем информацию о валютах
-            for currency_code, currency_info in data['Valute'].items():
-                print(f"Код валюты: {currency_code}")
-                print(f"Название: {currency_info['Name']}")
-                print(f"Курс к рублю: {currency_info['Value']} рублей")
-                print(f"Номинал: {currency_info['Nominal']}")
-                print("------------")
-
-        except requests.exceptions.RequestException as e:
-            print(f"Ошибка при запросе к API: {e}")
-        except ValueError as e:
-            print(f"Ошибка при обработке JSON-данных: {e}")
-
-
-
-
-
-
-
-
-        
-
-    
-
-
+# Объявление экземпляров
 audio = Audio_file(folder_a, folder_b)
-valute = Valute()
 db = DataBase(db_name)
-
-#audio.print_available_dates(audio.available_dates(folder_b))
-#audio.copy_file(folder_a, folder_b) #Сценарий автообновления папки бота
-#audio.dellete_audio_folders(folder_b) #Сценарий автоудаления папки бота
-#db.create_db_users() # Сценарий создания таблицы пользователей
-#print(db.users_list('bot_users'))
-#print(db.user_chat_id('bot_users'))
-#print(db.chat_id_list('bot_users', 'user_status', 1))
-
-print(audio.print_dates(folder_b))
-#print(audio.print_time_slots(folder_b, '2023-02-16', 1))
-
-
-
-#valute.pars_valute()
-
-"""cursor.execute('SELECT id FROM avtoradio_bot_users WHERE id=? AND user_status=1', (user_id,))
-return bool(cursor.fetchall())"""
-        
-        
-
-        
+       
